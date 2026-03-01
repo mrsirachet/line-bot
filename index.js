@@ -158,14 +158,26 @@ app.post('/webhook', line.middleware(config), async (req, res) => {
         return
       }
 
-      const userText = event.message.text
-      const intent = analyzeIntent(userText)
-      const replyText = generateResponse(intent, userText)
+const userText = event.message.text
+const intent = analyzeIntent(userText)
+const replyText = generateResponse(intent, userText)
 
-      await client.replyMessage(event.replyToken, {
-        type: 'text',
-        text: replyText
-      })
+// 🔥 SAVE ทุกข้อความที่พิมพ์เข้ามา (เพื่อทดสอบก่อน)
+await saveToSheet([
+  new Date().toISOString(),
+  event.source.userId,
+  "LifeCompass",
+  userText,
+  "-",
+  "-",
+  "-",
+  intent
+])
+
+await client.replyMessage(event.replyToken, {
+  type: 'text',
+  text: replyText
+})
     }))
 
     res.sendStatus(200)
