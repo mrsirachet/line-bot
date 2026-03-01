@@ -1,6 +1,26 @@
 require('dotenv').config()
 const express = require('express')
 const line = require('@line/bot-sdk')
+const { google } = require('googleapis')
+async function saveToSheet(rowData) {
+  const credentials = JSON.parse(process.env.GOOGLE_CREDENTIALS)
+
+  const auth = new google.auth.GoogleAuth({
+    credentials,
+    scopes: ['https://www.googleapis.com/auth/spreadsheets']
+  })
+
+  const sheets = google.sheets({ version: 'v4', auth })
+
+  await sheets.spreadsheets.values.append({
+    spreadsheetId: '10P5jR8ESERIsmtN48aeAv3H6f--b9kOrT-7SY56iQIU',
+    range: 'Sheet1!A:H',
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [rowData]
+    }
+  })
+}
 
 const app = express()
 
