@@ -1,46 +1,35 @@
-const express = require("express");
-const bodyParser = require("body-parser");
-const axios = require("axios");
+const express = require('express')
+const line = require('@line/bot-sdk')
 
-const app = express();
-app.use(bodyParser.json());
+const app = express()
 
-const CHANNEL_ACCESS_TOKEN = process.env.CHANNEL_ACCESS_TOKEN;
+const config = {
+  channelAccessToken: process.env.CHANNEL_ACCESS_TOKEN,
+  channelSecret: process.env.CHANNEL_SECRET
+}
 
-app.post("/webhook", async (req, res) => {
-  const events = req.body.events;
+const client = new line.Client(config)
 
-  for (let event of events) {
-    if (event.type === "message" && event.message.type === "text") {
-      await axios.post(
-        "https://api.line.me/v2/bot/message/reply",
-        {
-          replyToken: event.replyToken,
-          messages: [
-            {
-              type: "text",
-              text: "บอททำงานแล้ว ✅",
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${CHANNEL_ACCESS_TOKEN}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
-    }
+app.post('/webhook', line.middleware(config), async (req, res) => {
+  try {
+    const events = req.body.events
+
+    await Promise.all(events.map(async (event) => {
+      if (event.type === 'message' && event.message.type === 'text') {
+        await client.replyMessage(event.replyToken, {
+          type: 'text',
+          text: 'คุณพิมพ์ว่า: ' + event.message.text
+        })
+      }
+    }))
+
+    res.sendStatus(200)
+  } catch (err) {
+    console.error(err)
+    res.sendStatus(500)
   }
+})
 
-  res.sendStatus(200);
-});
-
-app.get("/", (req, res) => {
-  res.send("Server is running");
-});
-
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log("Server started");
-});
+app.listen(process.env.PORT || 3000, () => {
+  console.log('Server running')
+})
